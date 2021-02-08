@@ -1,8 +1,11 @@
 package com.dgj.dm.factory.demo.di.factory;
 
 import com.dgj.dm.factory.demo.di.core.bean.BeanDefinion;
+import com.dgj.dm.factory.demo.di.exception.BeanCreationFailureException;
+import com.dgj.dm.factory.demo.di.exception.NoSuchBeanDefinionException;
 import com.google.common.annotations.VisibleForTesting;
 
+import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -17,11 +20,17 @@ public class BeanFactory {
 
 
     /**
+     * 以懒加载的形式获取对应的bean对象
+     *
      * @param beanName
      * @return
      */
     public Object getBean(String beanName) {
-        return singletonObjects.get(beanName);
+        BeanDefinion definion = beanDefinions.get(beanName);
+        if (definion == null) {
+            throw new NoSuchBeanDefinionException("Bean is not defined: " + beanName);
+        }
+        return createBean(definion);
     }
 
 
@@ -30,13 +39,54 @@ public class BeanFactory {
      */
     public void addBeanDefinion(List<BeanDefinion> beanDefinions) {
         for (BeanDefinion definion : beanDefinions) {
-            this.beanDefinions.put(definion.getId(), definion);
-            this.singletonObjects.put(definion.getId(), createBean(definion));
+            this.beanDefinions.putIfAbsent(definion.getId(), definion);
+        }
+        for (BeanDefinion definion : beanDefinions) {
+            if (definion.isLazyInit() == false && definion.isSingleton()) {
+                createBean(definion);
+            }
         }
     }
 
     @VisibleForTesting
     protected Object createBean(BeanDefinion beanDefinion) {
-        return beanDefinion;
+        if (beanDefinion.isSingleton() && singletonObjects.containsKey(beanDefinion.getId())) {
+            return singletonObjects.get(beanDefinion.getId());
+        }
+        Object bean;
+        try {
+            Class<?> beanClass = Class.forName(beanDefinion.getClassName());
+            List<BeanDefinion.ConstructorArg> constructorArgs = beanDefinion.getConstructorArgs();
+            if (constructorArgs.isEmpty()) {
+                bean = beanClass.newInstance();
+            } else {
+                int argSize = constructorArgs.size();
+                Class[] argClasses = new Class[argSize];
+                Object[] argObjects = new Object[argSize];
+                for (int i = 0; i < argSize; i++) {
+                    BeanDefinion.ConstructorArg arg = constructorArgs.get(i);
+                    if (arg.isRef()) {
+                        BeanDefinion definion = beanDefinions.get(arg.getArg());
+                        if (definion == null) {
+                            throw new NoSuchBeanDefinionException("Bean is not defined: " + arg.getArg());
+                        }
+                        argClasses[i] = Class.forName(definion.getClassName());
+                        argObjects[i] = createBean(definion);
+                    } else {
+                        argClasses[i] = arg.getType();
+                        argObjects[i] = arg.getArg();
+                    }
+                }
+                bean = beanClass.getConstructor(argClasses).newInstance(argObjects);
+            }
+        } catch (ClassNotFoundException | IllegalAccessException
+                | InstantiationException | NoSuchMethodException | InvocationTargetException e) {
+            throw new BeanCreationFailureException("", e);
+        }
+        if (bean != null && beanDefinion.isSingleton()) {
+            singletonObjects.putIfAbsent(beanDefinion.getId(), bean);
+            return singletonObjects.get(beanDefinion.getId());
+        }
+        return bean;
     }
 }

@@ -10,7 +10,7 @@ import java.util.HashMap;
 public class ClassUtil {
     private static HashMap<String, Class> classMap = new HashMap<>();
 
-    {
+    static {
         try {
             classMap.put("String", Class.forName("java.lang.String"));
             classMap.put("Double", Class.forName("java.lang.Double"));

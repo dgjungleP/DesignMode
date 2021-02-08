@@ -7,6 +7,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -102,8 +103,15 @@ public class XmlBeanConfigParser implements BeanConfigParser {
             arg.setArg(ref);
         } else {
             arg.setRef(false);
-            arg.setArg(configMap.get("value"));
-            arg.setType(ClassUtil.coverClass(configMap.get("type")));
+            Class type = ClassUtil.coverClass(configMap.get("type"));
+            Object value;
+            try {
+                value = type.getConstructor(String.class).newInstance(configMap.get("value"));
+                arg.setArg(type.cast(value));
+                arg.setType(type);
+            } catch (InstantiationException | IllegalAccessException | InvocationTargetException | NoSuchMethodException e) {
+                e.printStackTrace();
+            }
         }
         return arg;
     }

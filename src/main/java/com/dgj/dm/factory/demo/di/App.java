@@ -11,6 +11,11 @@ public class App {
 
     public static void main(String[] args) {
         ClassPathXmlApplicationContext context = new ClassPathXmlApplicationContext("beans_factory.xml");
-        Object hello = context.getBean("redisCounter");
+        System.out.println("context.getBean(\"classA\") = " + context.getBean("classA"));
+        System.out.println("context.getBean(\"classA\") = " + context.getBean("classA"));
+        System.out.println("context.getBean(\"classA\") = " + context.getBean("classA"));
+        System.out.println("context.getBean(\"classB\") = " + context.getBean("classB"));
+        System.out.println("context.getBean(\"classB\") = " + context.getBean("classB"));
+        System.out.println("context.getBean(\"classB\") = " + context.getBean("classB"));
     }
 }
