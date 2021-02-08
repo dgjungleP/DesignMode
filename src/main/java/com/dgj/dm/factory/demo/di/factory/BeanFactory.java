@@ -21,7 +21,7 @@ public class BeanFactory {
      * @return
      */
     public Object getBean(String beanName) {
-        return null;
+        return singletonObjects.get(beanName);
     }
 
 
@@ -29,10 +29,14 @@ public class BeanFactory {
      * @param beanDefinions
      */
     public void addBeanDefinion(List<BeanDefinion> beanDefinions) {
+        for (BeanDefinion definion : beanDefinions) {
+            this.beanDefinions.put(definion.getId(), definion);
+            this.singletonObjects.put(definion.getId(), createBean(definion));
+        }
     }
 
     @VisibleForTesting
     protected Object createBean(BeanDefinion beanDefinion) {
-        return null;
+        return beanDefinion;
     }
 }
