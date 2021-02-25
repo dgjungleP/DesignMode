@@ -1,0 +1,6 @@
+configs:
+  - appId: app-1
+    limits:
+      - api: /v1/test
+          limit: 100
+          unit: 60
