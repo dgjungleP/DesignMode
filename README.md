@@ -2,8 +2,8 @@
 ## 创建型  
 ### 单例模式   
 > - [ ] 目前暂未有可是尝试的demo可以使用
-### 工厂模式
-> - [x] [用工厂模式写一个简易的DI框架](src/main/java/com/dgj/dm/factory)
+### [工厂模式](src/main/java/com/dgj/dm/factory)
+> - [x] [用工厂模式写一个简易的DI框架](src/main/java/com/dgj/dm/factory/demo/di)
 ### 建造者模式
 > - [ ] 目前暂未有可是尝试的demo可以使用
 ### 原型模式
