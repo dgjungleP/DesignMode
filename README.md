@@ -49,7 +49,7 @@
 >  - [ ] 自定义告警规则功能
 ### 中介模式
 >  - [ ] 目前暂未有可是尝试的demo可以使用
-# [项目](src/main/java/com/dgj/project/)
+# [项目](src/main/java/com/dgj/project)
 >  - [x] [限流框架](src/main/java/com/dgj/project/ratelimiter)
->  - [ ] 幂等框架
+>  - [ ] [幂等框架](src/main/java/com/dgj/project/idempotent)
 >  - [ ] 灰度发布组件
