@@ -1,15 +1,16 @@
 package com.dgj.project.ratelimiter;
 
-import com.dgj.project.ratelimiter.alg.RateLimitAlg;
+import com.dgj.project.ratelimiter.alg.FixedTimeWinRateLimitAlg;
 import com.dgj.project.ratelimiter.exception.InternalErrorException;
 import com.dgj.project.ratelimiter.rule.ApiLimit;
 import com.dgj.project.ratelimiter.rule.RateLimitRule;
 import com.dgj.project.ratelimiter.rule.RuleConfig;
+import com.dgj.project.ratelimiter.rule.TrieRateLimitRule;
+import com.dgj.project.ratelimiter.rule.datasource.FileRuleConfigSource;
+import com.dgj.project.ratelimiter.rule.datasource.RuleConfigSource;
 import com.sun.org.slf4j.internal.Logger;
 import com.sun.org.slf4j.internal.LoggerFactory;
-import org.yaml.snakeyaml.Yaml;
 
-import java.io.InputStream;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -23,7 +24,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * 3.构建一个支持快速查询的数据结构
  * 4.提供给用户一个直接使用的 {@link RateLimiter#limit(String, String)} 方法
  * @see RuleConfig
- * @see RateLimitRule
+ * @see TrieRateLimitRule
  * @see RuleConfig.AppRuleConfig
  */
 public class RateLimiter {
@@ -31,18 +32,14 @@ public class RateLimiter {
     /**
      * 为每个api在内存中存储限流计算器
      */
-    private ConcurrentHashMap<String, RateLimitAlg> counters = new ConcurrentHashMap<>();
+    private ConcurrentHashMap<String, FixedTimeWinRateLimitAlg> counters = new ConcurrentHashMap<>();
     private RateLimitRule rule;
 
 
     public RateLimiter() {
-        RuleConfig ruleConfig = new RuleConfig();
-        InputStream configStream = this.getClass().getResourceAsStream("/RateLimiter-config.yml");
-        if (configStream != null) {
-            Yaml yaml = new Yaml();
-            ruleConfig = yaml.loadAs(configStream, RuleConfig.class);
-        }
-        this.rule = new RateLimitRule(ruleConfig);
+        RuleConfigSource source = new FileRuleConfigSource();
+        RuleConfig sourceConfig = source.load();
+        this.rule = new TrieRateLimitRule(sourceConfig);
     }
 
     public boolean limit(String appId, String url) throws InternalErrorException {
@@ -51,12 +48,12 @@ public class RateLimiter {
             return true;
         }
         String counterKey = appId + ":" + limit.getApi();
-        RateLimitAlg retaLimitCounter = counters.get(counterKey);
+        FixedTimeWinRateLimitAlg retaLimitCounter = counters.get(counterKey);
         /**
          * TODO 这里为什么会double check
          */
         if (retaLimitCounter == null) {
-            RateLimitAlg newRetaLimitCounter = new RateLimitAlg(limit.getLimit());
+            FixedTimeWinRateLimitAlg newRetaLimitCounter = new FixedTimeWinRateLimitAlg(limit.getLimit());
             retaLimitCounter = counters.putIfAbsent(url, newRetaLimitCounter);
             if (retaLimitCounter == null) {
                 retaLimitCounter = newRetaLimitCounter;
