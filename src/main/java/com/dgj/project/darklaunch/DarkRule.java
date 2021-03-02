@@ -3,6 +3,7 @@ package com.dgj.project.darklaunch;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * @version: v1.0
@@ -10,7 +11,12 @@ import java.util.Map;
  * @author: dgj
  */
 public class DarkRule {
-    private Map<String, DarkFeature> darkFeatureMap = new HashMap<>();
+    private Map<String, IDarkFeature> darkFeatureMap = new HashMap<>();
+
+    private ConcurrentHashMap<String, IDarkFeature> programmerDarkFeatureMap = new ConcurrentHashMap();
+
+    public DarkRule() {
+    }
 
     public DarkRule(DarkRuleConfig ruleConfig) {
         List<DarkRuleConfig.DarkFeatureConfig> features = ruleConfig.getFeatures();
@@ -19,7 +25,19 @@ public class DarkRule {
         }
     }
 
-    public DarkFeature getDarkFeature(String featureKey) {
+    public void addProgrammerDarkFeatureMap(String featureKey, IDarkFeature darkFeature) {
+        this.programmerDarkFeatureMap.put(featureKey, darkFeature);
+    }
+
+    public void setDarkFeatureMap(Map<String, IDarkFeature> darkFeatureMap) {
+        this.darkFeatureMap = darkFeatureMap;
+    }
+
+    public IDarkFeature getDarkFeature(String featureKey) {
+        IDarkFeature feature = programmerDarkFeatureMap.get(featureKey);
+        if (feature != null) {
+            return feature;
+        }
         return darkFeatureMap.get(featureKey);
     }
 }

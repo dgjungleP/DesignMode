@@ -11,7 +11,7 @@ import org.apache.commons.lang.StringUtils;
  * @date: 2021/3/2
  * @author: dgj
  */
-public class DarkFeature {
+public class DarkFeature implements IDarkFeature {
     private String key;
     private boolean enabled;
     private int percentage;

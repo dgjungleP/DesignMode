@@ -6,6 +6,9 @@ import org.yaml.snakeyaml.Yaml;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -22,7 +25,7 @@ import java.util.concurrent.TimeUnit;
 public class DarkLaunch {
     private static final Logger log = LoggerFactory.getLogger(DarkLaunch.class);
     private static final int DEFAULT_RULE_UPDATE_TIME_INTERVAL = 60;
-    private DarkRule rule;
+    private DarkRule rule = new DarkRule();
     private ScheduledExecutorService executor;
 
     public DarkLaunch(int ruleUpdateTimeInterval) {
@@ -59,8 +62,12 @@ public class DarkLaunch {
         if (ruleConfig == null) {
             throw new RuntimeException("Can not load dark rule.");
         }
-        // 不直接更新this.rule 中的数据而该用赋值，是为了避免在查询和更新时产生的并发问题
-        this.rule = new DarkRule(ruleConfig);
+        Map<String, IDarkFeature> darkFeatureMap = new HashMap<>();
+        List<DarkRuleConfig.DarkFeatureConfig> features = ruleConfig.getFeatures();
+        for (DarkRuleConfig.DarkFeatureConfig feature : features) {
+            darkFeatureMap.put(feature.getKey(), new DarkFeature(feature));
+        }
+        this.rule.setDarkFeatureMap(darkFeatureMap);
     }
 
     /**
@@ -68,9 +75,19 @@ public class DarkLaunch {
      *
      * @param featureKey 灰度规则的key值
      * @return 当前获取到的指定功能的灰度规则
-     * @see DarkLaunch
+     * @see IDarkFeature
      */
-    public DarkFeature getDarkFeature(String featureKey) {
+    public IDarkFeature getDarkFeature(String featureKey) {
         return this.rule.getDarkFeature(featureKey);
+    }
+
+    /**
+     * 对外暴露的接口用户添加用户自定义的灰度规则
+     *
+     * @param featureKey
+     * @param darkFeature
+     */
+    public void addProgrammerDarkFeatureMap(String featureKey, IDarkFeature darkFeature) {
+        this.rule.addProgrammerDarkFeatureMap(featureKey, darkFeature);
     }
 }
